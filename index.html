@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPA Calculator</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234f46e5'/><text x='50' y='68' font-size='54' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'>G</text></svg>">
+<style>
+:root{
+  --bg:#f5f6fa;--card:#fff;--ink:#1c1e26;--mute:#6b7080;--line:#e4e6ee;
+  --accent:#4f46e5;--accent-ink:#fff;--accent-soft:#eceafe;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;
+  --shadow:0 1px 2px rgba(20,20,40,.06),0 4px 14px rgba(20,20,40,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#13141a;--card:#1c1e27;--ink:#eceef5;--mute:#9aa0b4;--line:#2d303d;
+    --accent:#818cf8;--accent-ink:#13141a;--accent-soft:#272a45;--ok:#4ade80;--bad:#f87171;--warn:#fbbf24;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#13141a;--card:#1c1e27;--ink:#eceef5;--mute:#9aa0b4;--line:#2d303d;
+  --accent:#818cf8;--accent-ink:#13141a;--accent-soft:#272a45;--ok:#4ade80;--bad:#f87171;--warn:#fbbf24;--shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+aside{background:var(--card);border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px}
+.brand{font-weight:700;font-size:17px;padding:4px 10px 16px;display:flex;gap:10px;align-items:center}
+.brand i{width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-style:normal;font-size:15px}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 12px;border-radius:9px;cursor:pointer;color:var(--mute);font-weight:500}
+nav button:hover{background:var(--bg)}
+nav button.on{background:var(--accent-soft);color:var(--accent)}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px}
+main{padding:28px clamp(16px,4vw,44px) 60px;max-width:1100px;width:100%}
+h1{font-size:24px;margin:0 0 4px}
+h2{font-size:17px;margin:0}
+.sub{color:var(--mute);margin:0 0 20px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-bottom:22px}
+.big{padding:22px}
+.big .lbl{color:var(--mute);font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+.big .num{font-size:52px;font-weight:700;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums;margin:6px 0 2px}
+.big .meta{color:var(--mute);font-size:13px}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:7px;cursor:pointer;color:var(--mute);font-size:13px;font-weight:500}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.chart{padding:18px 18px 10px}
+.chart svg{width:100%;height:150px;display:block}
+.sem{margin-bottom:16px;overflow:hidden}
+.sem-h{display:flex;align-items:center;gap:12px;padding:14px 18px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.sem-h .t{flex:1;min-width:160px}
+.sem-h .t small{color:var(--mute);display:block;font-size:12.5px}
+.pill{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 12px;font-weight:600;font-variant-numeric:tabular-nums}
+.pill.none{background:var(--bg);color:var(--mute)}
+.ic{border:0;background:none;cursor:pointer;color:var(--mute);padding:6px 8px;border-radius:8px;font-size:15px}
+.ic:hover{background:var(--bg);color:var(--ink)}
+.ic.del:hover{color:var(--bad)}
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);text-align:left;padding:8px 18px;font-weight:600}
+td{padding:4px 18px;border-top:1px solid var(--line)}
+tr:first-child td{border-top:0}
+td input,td select{width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:7px 8px;margin:0 -8px}
+td input:hover,td select:hover{border-color:var(--line)}
+td input:focus,td select:focus,.fld input:focus,.fld select:focus{outline:2px solid var(--accent);outline-offset:0;background:var(--card);border-color:transparent}
+td.code{width:110px}td.cr{width:90px}td.gr{width:150px}td.pt{width:70px;color:var(--mute);font-variant-numeric:tabular-nums}td.x{width:44px;text-align:right}
+td.code input{font-variant-numeric:tabular-nums;color:var(--mute)}
+tr.ng td.gr select{color:var(--warn)}
+.sem-f{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--card);padding:7px 14px;border-radius:9px;cursor:pointer;font-weight:500}
+.btn:hover{background:var(--bg)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.sm{padding:5px 11px;font-size:13px}
+.empty{padding:22px 18px;color:var(--mute);text-align:center}
+.fld{display:block;margin-bottom:14px}
+.fld span{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+.fld input,.fld select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--card)}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);padding:22px;width:min(460px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,10,20,.5)}
+dialog h2{margin-bottom:14px}
+.dl-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.list{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px;margin:10px 0}
+.list button{display:flex;width:100%;gap:10px;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:9px 12px;cursor:pointer}
+.list button:first-child{border-top:0}
+.list button:hover{background:var(--bg)}
+.list b{font-weight:600;min-width:72px;font-variant-numeric:tabular-nums}
+.list em{margin-left:auto;color:var(--mute);font-style:normal;font-size:13px;white-space:nowrap}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;padding:18px}
+.sgrid label{display:block;font-size:13px;color:var(--mute)}
+.sgrid input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);margin-top:3px;font-variant-numeric:tabular-nums}
+.wrow{display:flex;align-items:center;gap:12px;padding:10px 18px;border-top:1px solid var(--line)}
+.wrow:first-of-type{border-top:0}
+.wrow span{flex:1}.wrow input{width:100px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card)}
+.note{padding:12px 18px;color:var(--mute);font-size:13px;border-top:1px solid var(--line)}
+.note.warn{color:var(--warn)}
+.help{padding:6px 24px 24px;line-height:1.65}
+.help h2{margin:22px 0 6px}.help h3{margin:16px 0 4px;font-size:15px}
+.help code,.kbd{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
+.help .tip{background:var(--accent-soft);border-radius:10px;padding:10px 14px;margin:10px 0}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:10px 12px}
+  .brand{padding:0 8px 0 0}nav{display:flex}.side-foot{margin:0 0 0 auto;flex-direction:row}
+  .hero{grid-template-columns:1fr}
+  td.pt,th.pt,td.code,th.code{display:none}
+}
+@media print{aside,.sem-f,.ic,.top .seg,.top .btn{display:none!important}.app{display:block}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand"><i>G</i> GPA Calculator</div>
+    <nav>
+      <button data-page="dash">Dashboard</button>
+      <button data-page="settings">Settings</button>
+      <button data-page="help">Help guide</button>
+    </nav>
+    <div class="side-foot">
+      <button class="btn sm" id="csv">Export CSV</button>
+      <button class="btn sm" id="export">Export backup</button>
+      <button class="btn sm" id="import">Import backup</button>
+      <button class="btn sm" id="theme">Theme</button>
+      <input type="file" id="file" accept="application/json" hidden>
+    </div>
+  </aside>
+  <main id="view"></main>
+</div>
+
+<dialog id="dlg"></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============ Handbook data (Dept. of Electrical & Information Engineering, Univ. of Ruhuna) ============
+   Module code EEsc..: 3rd char = semester level, 4th char = credits (e.g. EE3301 -> sem 3, 3 credits). */
+const CAT = {};
+function def(list, flag){
+  list.split("\n").map(s=>s.trim()).filter(Boolean).forEach(l=>{
+    const i = l.indexOf(" ");
+    const code = l.slice(0,i), name = l.slice(i+1);
+    CAT[code] = {code, name, credit:+code[3], kind:flag};
+  });
+}
+def(`EE3301 Analog Electronics
+EE3202 Data Structures and Algorithms
+EE3203 Electrical and Electronic Measurements
+EE3304 Engineering Electromagnetism
+EE3205 Power and Energy
+EE3306 Signals and Systems
+IS3301 Complex Analysis and Mathematical Transforms
+IS3321 Fundamentals of Management for Engineers
+IS3322 Society and the Engineer
+EE4201 Analog and Digital Communication
+EE4202 Computer Architecture
+EE4203 Database Systems
+EE4304 Digital Logic Design
+EE4305 Electric Machines
+EE4206 Engineering Design Methodology
+EE4207 Web Application Development
+IS4301 Probability and Statistics
+IS4322 Basic Economics
+EE5201 Communication Systems
+EE5202 Electronic Circuit Design
+EE5203 Machine Learning
+EE5304 Power Electronics
+EE5305 Power Systems
+EE5206 Software Project
+IS5311 Discrete Mathematics
+EE6301 Computer Networks
+EE6302 Control Systems Design
+EE6203 Digital Signal Processing
+EE6304 Embedded Systems Design
+EE6105 Research Methodologies
+IS5101 Engineering Ethics
+IS5302 Numerical Methods
+EE7201 Design and Management of Networks
+EE7302 Electrical Installations
+EE7803 Undergraduate Project
+EE8201 Comprehensive Design Project`, "core");
+def(`EC3301 Analog Electronics
+EC3202 Data Structures and Algorithms
+EC3203 Electrical and Electronic Measurements
+EC3404 GUI Programming
+EC3305 Signals and Systems
+EC4201 Advanced Data Structures and Algorithms
+EC4202 Computer Architecture
+EC4203 Database Systems
+EC4304 Digital Logic Design
+EC4205 Software Engineering Principles
+EC4206 Software Testing and Quality Assurance
+EC4307 Web Application Development
+EC5301 Control System Design
+EC5202 Electronic Circuit Design
+EC5203 Machine Learning
+EC5204 Object Oriented Design Patterns and Principles
+EC6205 Operating Systems and Network Programming
+EC5406 Software Group Project
+EC5311 Discrete Mathematics
+EC6301 Artificial Intelligence
+EC6302 Computer Networks
+EC6303 Embedded Systems Design
+EC7201 Information Security
+EC6105 Research Methodologies
+EC7801 Undergraduate Project`, "core");
+def(`EE4208 Advanced Data Structures and Algorithms
+EE5207 Advanced Digital Communications
+EE5208 DevOps Engineering
+EE5209 Energy Economics
+EE5210 Hardware Description Language
+EE5211 Object Oriented Design Patterns and Principles
+EE5212 Operating System and Network Programming
+EE5213 Power System Analysis
+EE6306 Artificial Intelligence
+EE6207 Information Security
+EE6208 Introduction to Biomedical Engineering
+EE6209 Renewable Energy Systems
+EE6210 Software Architecture
+EE6211 Special Purpose Electric Machines
+EE6212 Wireless and Mobile Communications
+EE7204 Advanced Data Communications
+EE7205 Cloud Computing
+EE7206 Computer Vision and Image Processing
+EE7207 Electric Motor Drives
+EE7208 Optimization Techniques for Engineers
+EE7209 Power Electronic Applications
+EE7210 Robotics and Automation
+EE7211 Telecommunication Networks
+EE8202 Autonomous Systems and Mobile Robotics
+EE8203 Big Data and Analytics
+EE8204 Blockchain and Cyber Security
+EE8205 Digital Control
+EE8206 High Performance Computing
+EE8207 High Voltage Engineering
+EE8208 IC Design
+EE8209 Microwave Communications
+EE8210 Optical Fibre Communication
+EE8211 Power System Protection
+EE8212 Smart Grid`, "TE");
+def(`EC5206 DevOps Engineering
+EC5207 Hardware Description Language
+EC5208 Mobile Application Development
+EC6206 Digital Signal Processing
+EC6207 Software Architecture
+EC6208 Wireless Communications
+EC7203 Advanced Artificial Intelligence
+EC7204 Cloud Computing
+EC7205 Computer Vision and Image Processing
+EC7206 Design and Management of Networks
+EC7207 Human Computer Interaction
+EC7208 Optimization Techniques for Engineers
+EC7209 Robotics and Automation
+EC7210 Telecommunication Networks
+EC8201 Autonomous Systems and Mobile Robotics
+EC8202 Big Data and Analytics
+EC8203 Bioinformatics
+EC8204 Blockchain and Cyber Security
+EC8205 Digital Control
+EC8206 Functional Programming
+EC8207 IC Design
+EC8208 High Performance Computing
+EC8209 Virtual and Augmented Reality`, "TE");
+def(`IS4224 Financial Management
+IS4225 Innovation Management & Entrepreneurship
+IS5221 Industrial Management
+IS5222 Organizational Behaviour and Human Resource Management
+IS5123 Project Management
+IS6121 Industrial Law
+IS7221 Academic English
+IS7122 Business Communication for Engineers
+IS8221 English for the Professional World
+IS4121 Appreciation of Music
+IS4123 Digital Modeling and Animation
+IS4126 Mindfulness
+IS4128 Industrial Sociology
+IS4227 Technology and Society`, "GE");
+
+def(`CE1101 Basic Concepts in Environmental Engineering
+CE1202 Introduction to Infrastructure Planning
+EE1301 Fundamentals of Electricity
+EE1102 Programming Fundamentals
+ME1201 Engineering Drawing
+ME1202 Fundamentals of Thermodynamics
+IS1301 Communication for Engineers
+IS1402 Mathematical Fundamentals for Engineers
+CE2201 Fundamentals of Fluid Mechanics
+CE2302 Mechanics of Materials
+EE2201 Fundamentals of Electronics
+EE2202 Object Oriented Programming
+ME2201 Engineering Mechanics
+ME2302 Fundamentals of Materials and Manufacturing Engineering
+IS2401 Linear Algebra and Differential Equations
+EC5202 Digital System Design with HDL
+EC5205 Operating System and Network Programming
+EC5207 DevOps Engineering
+EC5208 Mobile Application Development
+EC6204 Information Security
+EC6208 Software Architecture
+IS6102 Engineering Ethics
+IS6303 Numerical Methods`, "core");
+
+const PROGRAMS = {
+  EIE:{ label:"Electrical & Information Engineering", sems:{
+    1:"CE1101 CE1202 EE1301 EE1102 ME1201 ME1202 IS1301 IS1402",
+    2:"CE2201 CE2302 EE2201 EE2202 ME2201 ME2302 IS2401",
+    3:"EE3301 EE3202 EE3203 EE3304 EE3205 EE3306 IS3301 IS3321 IS3322",
+    4:"EE4201 EE4202 EE4203 EE4304 EE4305 EE4206 EE4207 IS4301 IS4322",
+    5:"EE5201 EE5202 EE5203 EE5304 EE5305 EE5206 IS5311",
+    6:"EE6301 EE6302 EE6203 EE6304 EE6105 IS5101 IS5302",
+    7:"EE7201 EE7302 EE7803",
+    8:"EE8201" }},
+  CE:{ label:"Computer Engineering", sems:{
+    1:"CE1101 CE1202 EE1301 EE1102 ME1201 ME1202 IS1301 IS1402",
+    2:"CE2201 CE2302 EE2201 EE2202 ME2201 ME2302 IS2401",
+    3:"EC3301 EC3202 EC3203 EC3404 EC3305 IS3301 IS3321 IS3322",
+    4:"EC4201 EC4202 EC4203 EC4205 EC4206 EC4304 EC4307 IS4126 IS4301 IS4322",
+    5:"EC5202 EC5203 EC5204 EC5205 EC5207 EC5208 EC5301 EC5406 IS5311",
+    6:"EC6105 EC6204 EC6208 EC6301 EC6302 EC6303 IS6102 IS6303",
+    7:"EC7801",
+    8:"" }}
+};
+
+/* ============ State ============ */
+const KEY = "gpa-calculator-v2";
+const DEFAULT_SCALE = {"A+":4.0,"A":4.0,"A-":3.7,"B+":3.3,"B":3.0,"B-":2.7,"C+":2.3,"C":2.0,"C-":1.7,"D+":1.3,"D":1.0,"E":0.0};
+const NGPA = ["H-(NGPA)","M-(NGPA)","S-(NGPA)","E-(NGPA)"];
+const defWeight = n => n<=2 ? 0.05 : n<=8 ? 0.15 : 1;
+const uid = () => Math.random().toString(36).slice(2,10);
+
+/* Your results (from "Results .pdf"). Format: code:grade — "" = not graded yet. NGPA grades use the app's names. */
+const SEED = `CE1101:C+ CE1202:C+ EE1301:B EE1102:C ME1201:C+ ME1202:B IS1301:C IS1402:B
+CE2201:C CE2302:C EE2201:B- EE2202:C+ ME2201:C ME2302:C+ IS2401:C+
+EC3202:B+ EC3203:B+ EC3301:B- EC3305:B- EC3404:A IS3301:B IS3321:S-(NGPA) IS3322:H-(NGPA)
+EC4201:B+ EC4202:B- EC4203:B+ EC4205:A EC4206:A EC4304:B EC4307:A- IS4126: IS4301:B IS4322:M-(NGPA)
+EC5202: EC5203: EC5204:A EC5205:B+ EC5207: EC5208: EC5301: EC5406: IS5311:B
+EC6105: EC6204: EC6208: EC6301: EC6302: EC6303: IS6102:B+ IS6303:A-`.split(/\s+/).map(x=>x.split(/:(.*)/s));
+function seededState(){
+  const st = blankState(); st.program = "CE";
+  SEED.forEach(([code,grade])=>{
+    const sem = st.semesters[+code[2]-1], c = CAT[code];
+    sem.modules.push({id:uid(),code,name:c.name,grade:grade||"",credit:c.credit});
+  });
+  return st;
+}
+function blankState(){
+  return { method:"sgpa", scale:{...DEFAULT_SCALE}, program:"EIE",
+    semesters:Array.from({length:8},(_,i)=>({id:uid(),name:"Semester "+(i+1),weight:defWeight(i+1),modules:[]})) };
+}
+let S = load();
+function load(){
+  try{ const r = localStorage.getItem(KEY); if(r){ const s = JSON.parse(r); if(s&&s.semesters&&s.scale) return s; } }catch(e){}
+  return seededState();
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+/* ============ GPA maths (per the Help Guide) ============ */
+const counts = m => m.grade in S.scale && Number(m.credit)>0;
+function semStats(sem){
+  let num=0, den=0;
+  sem.modules.forEach(m=>{ if(counts(m)){ num += S.scale[m.grade]*m.credit; den += +m.credit; } });
+  return {num, den, sgpa: den>0 ? num/den : null};
+}
+function overall(){
+  // method 1: Σ(SGPA×w)/Σw        method 2: Σ(w×C×GPV)/Σ(w×C)
+  let a=0,b=0,credits=0,used=0;
+  S.semesters.forEach(sem=>{
+    const w = Number(sem.weight)||0, st = semStats(sem);
+    if(st.sgpa===null || w<=0) return;
+    used++; credits += st.den;
+    a += S.method==="sgpa" ? st.sgpa*w : w*st.num;
+    b += S.method==="sgpa" ? w : w*st.den;
+  });
+  return {gpa: b>0 ? a/b : null, credits, used};
+}
+const f4 = v => v===null ? "—" : v.toFixed(4);
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = (s,r=document)=>r.querySelector(s);
+
+/* ============ UI ============ */
+let page = "dash";
+const view = $("#view");
+function go(p){ page=p; document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.page===p)); render(); window.scrollTo(0,0); }
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.page));
+function toast(t){ const e=$("#toast"); e.textContent=t; e.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(()=>e.classList.remove("on"),1800); }
+function render(){ ({dash:renderDash,settings:renderSettings,help:renderHelp})[page](); }
+
+function gradeOptions(sel){
+  const g = Object.keys(S.scale);
+  return `<option value="">N/A</option>` +
+    g.map(x=>`<option${x===sel?" selected":""}>${esc(x)}</option>`).join("") +
+    `<optgroup label="Non-GPA">` + NGPA.map(x=>`<option${x===sel?" selected":""}>${x}</option>`).join("") + `</optgroup>`;
+}
+
+function renderDash(){
+  view.innerHTML = `
+  <div class="top">
+    <div><h1>Dashboard</h1><p class="sub" style="margin:0">Your semesters, modules and GPA — saved automatically on this Mac.</p></div>
+    <div class="seg" id="method">
+      <button data-m="sgpa" title="Σ(SGPA × w) / Σw">Weighted SGPA</button>
+      <button data-m="module" title="Σ(w × C × GPV) / Σ(w × C)">Weighted Module CGPA</button>
+    </div>
+  </div>
+  <div class="hero">
+    <div class="card big">
+      <div class="lbl" id="mlabel"></div>
+      <div class="num" id="gpa">—</div>
+      <div class="meta" id="gmeta"></div>
+    </div>
+    <div class="card chart"><div class="lbl" style="color:var(--mute);font-size:13px;text-transform:uppercase;letter-spacing:.06em">SGPA by semester</div><div id="chart"></div></div>
+  </div>
+  <div id="sems"></div>
+  <button class="btn pri" id="addSem">+ Add New Semester</button>`;
+  $("#method").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.method=b.dataset.m;save();updateStats();});
+  $("#addSem").onclick=()=>semDialog();
+  renderSems(); updateStats();
+}
+
+function renderSems(){
+  $("#sems").innerHTML = S.semesters.map(sem=>`
+  <section class="card sem" data-sem="${sem.id}">
+    <div class="sem-h">
+      <div class="t"><h2>${esc(sem.name)}</h2><small>Weight ${sem.weight} · <span data-cr></span></small></div>
+      <span class="pill none" data-sgpa>SGPA —</span>
+      <button class="ic" data-act="edit" title="Edit semester">✎</button>
+      <button class="ic del" data-act="delSem" title="Delete semester">🗑</button>
+    </div>
+    ${sem.modules.length ? `<table><thead><tr><th class="code">Code</th><th>Module</th><th class="gr">Grade</th><th class="cr">Credit</th><th class="pt">Pts</th><th></th></tr></thead>
+      <tbody>${sem.modules.map(m=>rowHtml(m)).join("")}</tbody></table>`
+      : `<div class="empty">No modules yet. Add one, pick from the handbook, or load a default semester.</div>`}
+    <div class="sem-f">
+      <button class="btn sm" data-act="addMod">+ Add New Module</button>
+      <button class="btn sm" data-act="cat">From handbook…</button>
+      <button class="btn sm" data-act="tpl">Choose Default Semester</button>
+    </div>
+  </section>`).join("") || `<div class="card empty" style="margin-bottom:16px">No semesters yet — add your first one below.</div>`;
+}
+function rowHtml(m){
+  return `<tr data-mod="${m.id}" class="${NGPA.includes(m.grade)?"ng":""}">
+    <td class="code"><input data-f="code" value="${esc(m.code)}" placeholder="Code"></td>
+    <td><input data-f="name" value="${esc(m.name)}" placeholder="Module name"></td>
+    <td class="gr"><select data-f="grade">${gradeOptions(m.grade)}</select></td>
+    <td class="cr"><input data-f="credit" type="number" step="0.5" min="0" value="${esc(m.credit)}"></td>
+    <td class="pt" data-pt></td>
+    <td class="x"><button class="ic del" data-act="delMod" title="Delete module">✕</button></td></tr>`;
+}
+
+function updateStats(){
+  const o = overall();
+  $("#gpa").textContent = f4(o.gpa);
+  $("#mlabel").textContent = S.method==="sgpa" ? "Overall GPA · Weighted SGPA" : "Overall CGPA · Weighted Module";
+  $("#gmeta").textContent = o.used ? `${o.used} semester${o.used>1?"s":""} counted · ${o.credits} GPA credits` : "Add grades to a semester to see your GPA. Empty semesters are ignored.";
+  $("#method").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.m===S.method));
+  document.querySelectorAll("[data-sem]").forEach(el=>{
+    const sem = S.semesters.find(s=>s.id===el.dataset.sem); if(!sem) return;
+    const st = semStats(sem), p = $("[data-sgpa]",el);
+    p.textContent = "SGPA " + f4(st.sgpa); p.classList.toggle("none", st.sgpa===null);
+    $("[data-cr]",el).textContent = st.den + " GPA credits";
+    el.querySelectorAll("[data-mod]").forEach(tr=>{
+      const m = sem.modules.find(x=>x.id===tr.dataset.mod);
+      $("[data-pt]",tr).textContent = counts(m) ? (S.scale[m.grade]*m.credit).toFixed(2) : "";
+      tr.classList.toggle("ng", NGPA.includes(m.grade));
+    });
+  });
+  drawChart();
+}
+
+function drawChart(){
+  const data = S.semesters.map((s,i)=>({n:(s.name.match(/\d+/)||[i+1])[0], v:semStats(s).sgpa}));
+  const max = Math.max(4, ...data.map(d=>d.v||0)), W=400,H=150,pad=22,bw=Math.min(34,(W-20)/Math.max(data.length,1)-8);
+  const step=(W-20)/Math.max(data.length,1);
+  $("#chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="SGPA per semester">` +
+    [1,2,3,4].filter(g=>g<=max).map(g=>{const y=H-pad-(g/max)*(H-pad-12);return `<line x1="10" x2="${W-10}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="0" y="${y-2}" font-size="9" fill="var(--mute)">${g}</text>`}).join("") +
+    data.map((d,i)=>{const x=10+i*step+(step-bw)/2,h=d.v===null?0:(d.v/max)*(H-pad-12);
+      return `<rect x="${x}" y="${H-pad-h}" width="${bw}" height="${h}" rx="4" fill="var(--accent)"><title>${d.v===null?"no data":d.v.toFixed(4)}</title></rect>
+      <text x="${x+bw/2}" y="${H-7}" font-size="10" text-anchor="middle" fill="var(--mute)">S${esc(d.n)}</text>
+      ${d.v===null?"":`<text x="${x+bw/2}" y="${H-pad-h-4}" font-size="9" text-anchor="middle" fill="var(--ink)">${d.v.toFixed(2)}</text>`}`}).join("") + `</svg>`;
+}
+
+/* ----- dashboard events (delegated) ----- */
+view.addEventListener("change",e=>{
+  const row = e.target.closest("[data-mod]"); if(!row||!e.target.dataset.f) return;
+  const sem = S.semesters.find(s=>s.id===e.target.closest("[data-sem]").dataset.sem);
+  const m = sem.modules.find(x=>x.id===row.dataset.mod), f = e.target.dataset.f;
+  if(f==="credit"){ const v=parseFloat(e.target.value); m.credit = isFinite(v)&&v>=0 ? v : 0; e.target.value=m.credit; }
+  else m[f] = e.target.value.trim();
+  save(); updateStats();
+});
+view.addEventListener("click",e=>{
+  const b = e.target.closest("[data-act]"); if(!b) return;
+  const el = b.closest("[data-sem]"), sem = el && S.semesters.find(s=>s.id===el.dataset.sem), act=b.dataset.act;
+  if(act==="edit") semDialog(sem);
+  else if(act==="delSem"){ if(confirm(`Delete "${sem.name}" and all its modules? This cannot be undone.`)){ S.semesters=S.semesters.filter(s=>s!==sem); save(); renderDash(); } }
+  else if(act==="addMod"){ sem.modules.push({id:uid(),code:"",name:"",grade:"",credit:3}); save(); renderSems(); updateStats(); const r=$(`[data-sem="${sem.id}"] tbody tr:last-child [data-f=name]`); r&&r.focus(); }
+  else if(act==="delMod"){ const id=b.closest("[data-mod]").dataset.mod; sem.modules=sem.modules.filter(m=>m.id!==id); save(); renderSems(); updateStats(); }
+  else if(act==="cat") catalogDialog(sem);
+  else if(act==="tpl") templateDialog(sem);
+});
+
+/* ----- dialogs ----- */
+const dlg = $("#dlg");
+function openDlg(html){ dlg.innerHTML = html; dlg.showModal(); return dlg; }
+dlg.addEventListener("click",e=>{ if(e.target===dlg) dlg.close(); });
+
+function semDialog(sem){
+  const n = S.semesters.length+1;
+  openDlg(`<form method="dialog" id="sf"><h2>${sem?"Edit Semester":"New Semester"}</h2>
+    <label class="fld"><span>Semester name</span><input name="name" required value="${esc(sem?sem.name:"Semester "+n)}"></label>
+    <label class="fld"><span>Weight (0.05 for sem 1–2, 0.15 for sem 3–8)</span><input name="weight" type="number" step="0.01" min="0" required value="${sem?sem.weight:defWeight(n)}"></label>
+    <div class="dl-actions"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn pri" value="ok">Submit</button></div></form>`);
+  $("#sf").onsubmit = e=>{
+    if(e.submitter && e.submitter.value==="cancel") return;
+    const f = new FormData(e.target), name=String(f.get("name")).trim(), weight=parseFloat(f.get("weight"));
+    if(!name||!(weight>=0)) return;
+    if(sem){ sem.name=name; sem.weight=weight; } else S.semesters.push({id:uid(),name,weight,modules:[]});
+    save(); renderDash();
+  };
+}
+
+function catalogDialog(sem){
+  const semNo = +(sem.name.match(/\d+/)||[0])[0];
+  openDlg(`<h2>Add from handbook</h2>
+    <label class="fld" style="margin:0"><span>Search code or name</span><input id="q" autofocus placeholder="e.g. EE5203 or machine learning"></label>
+    <div class="list" id="cl"></div>
+    <div class="dl-actions"><button class="btn" id="cx">Close</button></div>`);
+  const items = Object.values(CAT);
+  const levelOf = c => +c[2] || 0;               // 3rd char = semester level
+  const fill = q=>{
+    q=q.toLowerCase();
+    const rows = items.filter(i=>!q || (i.code+" "+i.name).toLowerCase().includes(q))
+      .sort((a,b)=> (levelOf(b.code)===semNo)-(levelOf(a.code)===semNo) || a.code.localeCompare(b.code)).slice(0,80);
+    $("#cl").innerHTML = rows.map(i=>`<button data-c="${i.code}"><b>${i.code}</b><span>${esc(i.name)}</span><em>${i.credit} cr${i.kind!=="core"?" · "+i.kind:""}</em></button>`).join("") || `<div class="empty">No match</div>`;
+  };
+  fill(""); $("#q").oninput=e=>fill(e.target.value);
+  $("#cx").onclick=()=>dlg.close();
+  $("#cl").onclick=e=>{ const b=e.target.closest("[data-c]"); if(!b) return; const c=CAT[b.dataset.c];
+    sem.modules.push({id:uid(),code:c.code,name:c.name,grade:"",credit:c.credit}); save(); renderSems(); updateStats(); toast(`Added ${c.code}`); };
+}
+
+function templateDialog(sem){
+  const semNo = +(sem.name.match(/\d+/)||[0])[0];
+  openDlg(`<form method="dialog" id="tf"><h2>Choose Default Semester</h2>
+    <label class="fld"><span>Programme</span><select name="p">${Object.entries(PROGRAMS).map(([k,v])=>`<option value="${k}"${k===S.program?" selected":""}>${esc(v.label)}</option>`).join("")}</select></label>
+    <label class="fld"><span>Semester</span><select name="s">${[1,2,3,4,5,6,7,8].map(n=>`<option${n===semNo?" selected":""}>${n}</option>`).join("")}</select></label>
+    <p class="sub" style="font-size:13px;margin-top:-6px">Fills in handbook module codes, names and credits. Grades start as N/A. Semesters 1–2 aren't in the handbook, so add those by hand. TE/GE electives: use “From handbook…”.</p>
+    <div class="dl-actions"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn pri" value="ok">Load modules</button></div></form>`);
+  $("#tf").onsubmit=e=>{
+    if(e.submitter && e.submitter.value==="cancel") return;
+    const f=new FormData(e.target), p=f.get("p"), n=+f.get("s"), codes=(PROGRAMS[p].sems[n]||"").split(/\s+/).filter(Boolean);
+    if(!codes.length){ toast("No compulsory modules listed for that semester"); e.preventDefault(); return; }
+    if(sem.modules.length && !confirm("Replace the existing modules in this semester?")){ e.preventDefault(); return; }
+    S.program=p; sem.modules = codes.map(c=>({id:uid(),code:c,name:CAT[c].name,grade:"",credit:CAT[c].credit}));
+    save(); renderDash();
+  };
+}
+
+/* ----- settings ----- */
+function renderSettings(){
+  const total = S.semesters.reduce((a,s)=>a+(+s.weight||0),0);
+  view.innerHTML = `<h1>Settings</h1><p class="sub">Grading scale and semester weights. Changes save automatically.</p>
+  <section class="card" style="margin-bottom:18px"><div style="padding:16px 18px 0"><h2>Grading scale</h2></div>
+    <div class="sgrid">${Object.keys(S.scale).map(g=>`<label>${esc(g)}<input type="number" step="0.01" min="0" data-g="${esc(g)}" value="${S.scale[g]}"></label>`).join("")}</div>
+    <div class="note">Defaults follow the 4.0 example in the Help Guide (A+ = A = 4.0, A- = 3.7, B+ = 3.3 …). Check these against your faculty's official scale. Non-GPA grades (H, M, S, E-(NGPA)) never count towards GPA.</div>
+    <div class="sem-f"><button class="btn sm" id="resetScale">Reset to defaults</button></div>
+  </section>
+  <section class="card" style="margin-bottom:18px"><div style="padding:16px 18px 10px"><h2>Semester weights</h2></div>
+    ${S.semesters.map(s=>`<div class="wrow"><span>${esc(s.name)}</span><input type="number" step="0.01" min="0" data-w="${s.id}" value="${s.weight}"></div>`).join("") || `<div class="empty">No semesters.</div>`}
+    <div class="note ${Math.abs(total-1)>0.0005?"warn":""}" id="wtotal">Total weight: ${total.toFixed(2)} ${Math.abs(total-1)>0.0005?"(the guide's defaults sum to 1.00)":""}</div>
+    <div class="sem-f"><button class="btn sm" id="resetW">Reset to 0.05 / 0.15</button></div>
+  </section>
+  <section class="card"><div style="padding:16px 18px"><h2>Data</h2><p class="sub" style="margin:6px 0 12px">Everything lives in this browser only. Use Export backup regularly.</p>
+    <button class="btn" id="wipe" style="color:var(--bad)">Erase all data…</button></div></section>`;
+  view.oninput = null;
+  view.onchange = e=>{
+    if(e.target.dataset.g){ const v=parseFloat(e.target.value); if(isFinite(v)&&v>=0){S.scale[e.target.dataset.g]=v;save();toast("Saved");} else e.target.value=S.scale[e.target.dataset.g]; }
+    if(e.target.dataset.w){ const v=parseFloat(e.target.value), s=S.semesters.find(x=>x.id===e.target.dataset.w); if(isFinite(v)&&v>=0){s.weight=v;save();renderSettings();} else e.target.value=s.weight; }
+  };
+  $("#resetScale").onclick=()=>{S.scale={...DEFAULT_SCALE};save();renderSettings();};
+  $("#resetW").onclick=()=>{S.semesters.forEach(s=>{const n=+(s.name.match(/\d+/)||[0])[0]; if(n) s.weight=defWeight(n);});save();renderSettings();};
+  $("#wipe").onclick=()=>{ if(confirm("Erase ALL semesters, modules and settings? Export a backup first if unsure.")){ S=blankState(); save(); go("dash"); } };
+}
+
+/* ----- help ----- */
+function renderHelp(){
+  view.innerHTML = `<h1>Help guide</h1><p class="sub">Condensed from the GPA Calculator Help Guide.</p>
+  <div class="card help">
+    <h2>Getting started</h2><p>Check your grading scale in <b>Settings</b>, then fill in your semesters on the <b>Dashboard</b>.</p>
+    <h2>Semesters</h2>
+    <p><b>Add:</b> “Add New Semester” at the bottom of the Dashboard → name + weight → Submit. Default weight is 0.05 for semesters 1–2 and 0.15 for 3–8.<br>
+    <b>Edit:</b> ✎ beside the semester name. <b>Delete:</b> 🗑 (also deletes its modules — it can't be undone).</p>
+    <h2>Modules</h2>
+    <p><b>Manual:</b> “Add New Module”, then click any field: name, grade (dropdown, including H/M/S/E-(NGPA)) and credit. Changes save as soon as you leave the field.<br>
+    <b>Default list:</b> “Choose Default Semester” loads the handbook's compulsory modules for your programme and semester. “From handbook…” searches every compulsory, TE and GE module.</p>
+    <div class="tip">In a module code like EE<b>5</b><b>2</b>03, the first digit is the semester (5) and the second is the credits (2). So EE7<b>8</b>03 is 8 credits.</div>
+    <h2>How GPA is calculated</h2>
+    <p><b>SGPA</b> = Σ(grade points × credits) ÷ Σ credits of that semester.</p>
+    <p><b>Weighted SGPA</b> (default) = Σ(SGPA × w) ÷ Σw.<br><b>Weighted Module CGPA</b> (official CGPA) = Σ(w × C × GPV) ÷ Σ(w × C).</p>
+    <p>NGPA modules and modules with no grade or zero credit never count. Semesters with no graded modules, or with weight 0, are skipped.</p>
+    <h2>Troubleshooting</h2>
+    <p><b>GPA shows —:</b> no valid grades yet — pick grades (not N/A), use credits &gt; 0, and make sure the scale in Settings is filled in.<br>
+    <b>Data missing:</b> data is stored per browser. Use the same browser, and keep a backup via <b>Export backup</b> / <b>Import backup</b>.</p>
+  </div>`;
+}
+
+/* ----- backup / theme ----- */
+$("#export").onclick=()=>{
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}));
+  a.download=`gpa-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); toast("Backup downloaded");
+};
+$("#csv").onclick=()=>{
+  const q = v => { v=String(v??""); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const rows = [["Semester","Weight","Module Code","Module Name","Credits","Type","Grade","Grade Points","Credit x Points"]];
+  S.semesters.forEach(sem=>sem.modules.forEach(m=>{
+    const ng = NGPA.includes(m.grade), has = m.grade in S.scale;
+    rows.push([sem.name,sem.weight,m.code,m.name,m.credit,ng?"NGPA":"GPA",ng?m.grade.charAt(0):m.grade,has?S.scale[m.grade]:"",has?(S.scale[m.grade]*m.credit).toFixed(2):""]);
+  }));
+  rows.push([],["SUMMARY"],["Semester","Weight","GPA Credits","SGPA"]);
+  S.semesters.forEach(sem=>{ const st=semStats(sem); rows.push([sem.name,sem.weight,st.den,st.sgpa===null?"":st.sgpa.toFixed(4)]); });
+  const keep=S.method; S.method="sgpa"; const a=overall(); S.method="module"; const b=overall(); S.method=keep;
+  rows.push([],["Overall GPA (Weighted SGPA)","","",a.gpa===null?"":a.gpa.toFixed(4)],["Overall CGPA (Weighted Module)","","",b.gpa===null?"":b.gpa.toFixed(4)]);
+  const csv = "\ufeff" + rows.map(r=>r.map(q).join(",")).join("\r\n");
+  const l=document.createElement("a"); l.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  l.download=`gpa-results-${new Date().toISOString().slice(0,10)}.csv`; l.click(); setTimeout(()=>URL.revokeObjectURL(l.href),1000); toast("CSV downloaded");
+};
+$("#import").onclick=()=>$("#file").click();
+$("#file").onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  try{ const s=JSON.parse(await f.text()); if(!s.semesters||!s.scale) throw 0;
+    if(confirm("Replace current data with this backup?")){ S=s; save(); go(page); toast("Backup restored"); }
+  }catch(_){ alert("That file isn't a valid GPA backup."); }
+};
+function applyTheme(t){ if(t) document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme"); }
+try{ applyTheme(localStorage.getItem("gpa-theme")); }catch(e){}
+$("#theme").onclick=()=>{
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const cur = document.documentElement.getAttribute("data-theme") || (dark?"dark":"light"), next = cur==="dark"?"light":"dark";
+  applyTheme(next); try{localStorage.setItem("gpa-theme",next);}catch(e){}
+};
+
+go("dash");
+</script>
+</body>
+</html>
